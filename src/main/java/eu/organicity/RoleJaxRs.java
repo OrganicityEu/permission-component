@@ -1,5 +1,7 @@
 package eu.organicity;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -15,13 +17,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.codehaus.jackson.map.ObjectMapper;
+
 @Path("/users")
 public class RoleJaxRs extends Application {
 
-	private HashMap<String, LinkedList<Role>> roles;
+	private HashMap<String, LinkedList<String>> roles;
 	
 	public RoleJaxRs() {
-		roles = new HashMap<String, LinkedList<Role>>();
+		roles = new HashMap<String, LinkedList<String>>();
 	}
 	
 	@GET
@@ -40,17 +44,28 @@ public class RoleJaxRs extends Application {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles")
-	public Response postRole(@PathParam("userid") String userid, Role role) {
+	public Response postRole(@PathParam("userid") String userid, InputStream inputStream) {
 		
-		if(!roles.containsKey(userid)) {
-			roles.put(userid, new LinkedList<Role>());
+		try {
+
+			// @see: https://stackoverflow.com/questions/38125756/consume-json-string-with-jax-rs
+
+			ObjectMapper mapper = new ObjectMapper();
+			String role = mapper.readValue(inputStream, String.class);
+
+			if(!roles.containsKey(userid)) {
+				roles.put(userid, new LinkedList<String>());
+			}
+
+			if(!roles.get(userid).contains(role)) {
+				roles.get(userid).add(role);
+			}
+
+			return Response.status(Status.CREATED).entity(role).build();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return Response.status(Status.BAD_REQUEST).entity("BAD REQUEST").build();
 		}
-		
-		if(!roles.get(userid).contains(role)) {
-			roles.get(userid).add(role);
-		}
-		
-		return Response.status(Status.CREATED).entity(role).build();
 	}	
 
 	@GET
@@ -59,7 +74,7 @@ public class RoleJaxRs extends Application {
 	public Response getRoleByName(@PathParam("userid") String userid, @PathParam("rolename") String rolename) {
 
 		if(roles.containsKey(userid)) {
-			if(roles.get(userid).contains(new RoleImpl(rolename))) {
+			if(roles.get(userid).contains(rolename)) {
 				return Response.status(Status.OK).entity("OK").build();
 			} 
 		} 
@@ -73,16 +88,13 @@ public class RoleJaxRs extends Application {
 	public Response deleteRoleByName(@PathParam("userid") String userid, @PathParam("rolename") String rolename) {
 
 		if(roles.containsKey(userid)) {
-			Role tmpRole = new RoleImpl(rolename);
-			if(roles.get(userid).contains(tmpRole)) {
-				roles.get(userid).remove(tmpRole);
+			if(roles.get(userid).contains(rolename)) {
+				roles.get(userid).remove(rolename);
 				return Response.status(Status.OK).entity("OK").build();
 			} 
 		} 
 		
 		return Response.status(Status.NOT_FOUND).entity("NOT FOUND").build();
 	}
-	
-	
 	
 }
