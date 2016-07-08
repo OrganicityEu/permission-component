@@ -23,6 +23,11 @@
 			<version>1.9.13</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+		<dependency>
 			<groupId>eu.organicity</groupId>
 			<artifactId>accounts-permissions</artifactId>
 			<version>0.1.0-dev</version>
