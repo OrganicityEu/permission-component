@@ -39,13 +39,16 @@ public class RoleJaxRs extends Application {
 		System.out.println("Client ID: " + clientid);
 		System.out.println("User ID: " + userid);
 
-		List<String> roles = a.getUserRoles(userid, clientid);
-
-		if(roles != null) {
-			return Response.status(Status.OK).entity(roles).build();
-		}
-		
-		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
+		try {
+			List<String> roles = a.getUserRoles(userid, clientid);
+			if(roles != null) {
+				return Response.status(Status.OK).entity(roles).build();
+			}
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}			
 	}
 	
 	@POST
@@ -55,11 +58,18 @@ public class RoleJaxRs extends Application {
 	@Path("/{userid}/roles")
 	public Response postRole(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, InputStream inputStream) {
 
+		String rolename = null;
+		
 		try {
 			// @see: https://stackoverflow.com/questions/38125756/consume-json-string-with-jax-rs
 			ObjectMapper mapper = new ObjectMapper();
-			String rolename = mapper.readValue(inputStream, String.class);
+			rolename = mapper.readValue(inputStream, String.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return Response.status(Status.BAD_REQUEST).build();
+		}
 
+		try {
 			System.out.println("Role:" + rolename);
 			System.out.println("Client ID: " + clientid);
 			System.out.println("User ID: " + userid);
@@ -67,43 +77,19 @@ public class RoleJaxRs extends Application {
 			Boolean success = a.setUserRole(userid, rolename);
 
 			if(success) {
-				return Response.status(Status.CREATED).entity("Role added").build();
+				return Response.status(Status.CREATED).build();
 			}
 			
-			return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
+			return Response.status(Status.NOT_FOUND).build();
 			
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-			return Response.status(Status.BAD_REQUEST).entity("BAD REQUEST").build();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}	
 
-	@GET
-	@Secured
-	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/{userid}/roles/{rolename}")
-	public Response getRoleByName(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, @PathParam("rolename") String rolename) {
-
-		System.out.println("Client ID: " + clientid);
-		System.out.println("User ID: " + userid);
-		System.out.println("Role:" + rolename);
-
-		List<String> roles = a.getUserRoles(userid, clientid);
-		
-		if(roles != null) {
-			if(roles.contains(rolename)) {
-				return Response.status(Status.OK).entity("OK").build();
-			}
-
-			return Response.status(Status.NOT_FOUND).entity("ROLE NOT FOUND").build();
-		}
-		
-		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
-	}
-
 	@DELETE
 	@Secured
-	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles/{rolename}")
 	public Response deleteRoleByName(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, @PathParam("rolename") String rolename) {
 
@@ -111,12 +97,40 @@ public class RoleJaxRs extends Application {
 		System.out.println("User ID: " + userid);
 		System.out.println("Role:" + rolename);
 
-		Boolean success = a.removeUserRole(userid, rolename);
-		
-		if(success) {
-			return Response.status(Status.OK).entity("Role deleted").build();
+		try {
+			Boolean success = a.removeUserRole(userid, rolename);
+			
+			if(success) {
+				return Response.status(Status.OK).build();
+			}
+			
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
-		
-		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
 	}
+	
+	@GET
+	@Secured
+	@Path("/{userid}/roles/{rolename}")
+	public Response getRoleByName(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, @PathParam("rolename") String rolename) {
+
+		System.out.println("Client ID: " + clientid);
+		System.out.println("User ID: " + userid);
+		System.out.println("Role:" + rolename);
+
+		try {
+			List<String> roles = a.getUserRoles(userid, clientid);
+			
+			if(roles != null && roles.contains(rolename)) {
+				return Response.status(Status.OK).build();
+			}
+			
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}	
 }
