@@ -11,7 +11,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
-import eu.organicity.accounts.permissions.Accounts;
 import io.jsonwebtoken.Claims;
 
 /*
@@ -30,12 +29,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
 
         // Check if the HTTP Authorization header is present and formatted correctly 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Basic ")) {
-            throw new NotAuthorizedException("Authorization header must be provided");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new NotAuthorizedException("Bearer Authorization header must be provided");
         }
 
         // Extract the token from the HTTP Authorization header
-        String token = authorizationHeader.substring("Basic".length()).trim();
+        String token = authorizationHeader.substring("Bearer".length()).trim();
 
         try {
 
@@ -46,24 +45,19 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         } catch (Exception e) {
             System.out.println("TOKEN invalid");
             e.printStackTrace();
-            requestContext.abortWith(
-                Response.status(Response.Status.UNAUTHORIZED).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }
     }
 
-    private String validateToken(String auth) throws Exception {
-		Accounts a = new Accounts();
-		String token = a.login(auth);
-    	
-		if(token == null) {
-            throw new NotAuthorizedException("Token not acceped!");
-		}
-
+    private String validateToken(String token) throws Exception {
 		JwtParser fwtparser = new JwtParser();
 		Claims claims = fwtparser.parseJWT(token);
 		System.out.println("Component realm: " + claims.get("aud"));
 		
-		// TODO: Check, if client ID has "role" to change the permissions
+		/*
+		 * TODO: Check, if client ID has "role" to change the permissions
+		 * If not, 403 Forbidden
+		 */
 		
 		return (String) claims.get("aud");
     }
