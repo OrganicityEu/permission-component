@@ -40,11 +40,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
             // Validate the token
             String clientid = validateToken(token);
-            System.out.println("TOKEN accepted");
             requestContext.getHeaders().add("X-ClientID", clientid);            
         } catch (Exception e) {
-            System.out.println("TOKEN invalid");
-            e.printStackTrace();
+            System.err.println("Token invalid: " + e.getMessage());
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }
     }

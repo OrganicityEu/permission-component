@@ -36,8 +36,10 @@ public class RoleJaxRs extends Application {
 	@Path("/{userid}/roles")
 	public Response getAllRoles(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid) {
 
+		System.out.println("#### Get Roles ####");
 		System.out.println("Client ID: " + clientid);
 		System.out.println("User ID: " + userid);
+		System.out.println("###################");
 
 		try {
 			List<String> roles = a.getUserRoles(userid, clientid);
@@ -70,9 +72,11 @@ public class RoleJaxRs extends Application {
 		}
 
 		try {
+			System.out.println("#### Post Roles ####");
 			System.out.println("Role:" + rolename);
 			System.out.println("Client ID: " + clientid);
 			System.out.println("User ID: " + userid);
+			System.out.println("####################");
 
 			Boolean success = a.setUserRole(userid, rolename);
 
@@ -93,9 +97,11 @@ public class RoleJaxRs extends Application {
 	@Path("/{userid}/roles/{rolename}")
 	public Response deleteRoleByName(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, @PathParam("rolename") String rolename) {
 
+		System.out.println("#### Delete Role ####");
 		System.out.println("Client ID: " + clientid);
 		System.out.println("User ID: " + userid);
 		System.out.println("Role:" + rolename);
+		System.out.println("#####################");
 
 		try {
 			Boolean success = a.removeUserRole(userid, rolename);
@@ -116,9 +122,11 @@ public class RoleJaxRs extends Application {
 	@Path("/{userid}/roles/{rolename}")
 	public Response getRoleByName(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, @PathParam("rolename") String rolename) {
 
+		System.out.println("#### Get Role ####");
 		System.out.println("Client ID: " + clientid);
 		System.out.println("User ID: " + userid);
 		System.out.println("Role:" + rolename);
+		System.out.println("##################");
 
 		try {
 			List<String> roles = a.getUserRoles(userid, clientid);
