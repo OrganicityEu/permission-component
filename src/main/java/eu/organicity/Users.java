@@ -22,11 +22,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import eu.organicity.accounts.permissions.Accounts;
 
 @Path("/users")
-public class RoleJaxRs extends Application {
+public class Users extends Application {
 
 	private Accounts a = new Accounts();
 
-	public RoleJaxRs() {
+	public Users() {
 		a.login(Config.basicAuth);
 	}
 	
