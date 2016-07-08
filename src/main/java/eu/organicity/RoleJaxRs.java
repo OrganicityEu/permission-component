@@ -2,8 +2,7 @@ package eu.organicity;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -20,13 +19,15 @@ import javax.ws.rs.core.Response.Status;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import eu.organicity.accounts.permissions.Accounts;
+
 @Path("/users")
 public class RoleJaxRs extends Application {
 
-	private HashMap<String, LinkedList<String>> roles;
-	
+	private Accounts a = new Accounts();
+
 	public RoleJaxRs() {
-		roles = new HashMap<String, LinkedList<String>>();
+		a.login(Config.basicAuth);
 	}
 	
 	@GET
@@ -38,16 +39,13 @@ public class RoleJaxRs extends Application {
 		System.out.println("Client ID: " + clientid);
 		System.out.println("User ID: " + userid);
 
-		//Accounts a = new Accounts();
-		//a.login("TOKEN");
-		//System.out.println("Login Successful");
-		//a.setUserRole(userId, role);
+		List<String> roles = a.getUserRoles(userid, clientid);
 
-		if(roles.containsKey(userid)) {
-			return Response.status(Status.OK).entity(roles.get(userid)).build();
-		} else {
-			return Response.status(Status.NOT_FOUND).entity("NOT FOUND").build();
+		if(roles != null) {
+			return Response.status(Status.OK).entity(roles).build();
 		}
+		
+		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
 	}
 	
 	@POST
@@ -61,20 +59,19 @@ public class RoleJaxRs extends Application {
 			// @see: https://stackoverflow.com/questions/38125756/consume-json-string-with-jax-rs
 			ObjectMapper mapper = new ObjectMapper();
 			String rolename = mapper.readValue(inputStream, String.class);
-			System.out.println("Role:" + rolename);
 
+			System.out.println("Role:" + rolename);
 			System.out.println("Client ID: " + clientid);
 			System.out.println("User ID: " + userid);
 
-			if(!roles.containsKey(userid)) {
-				roles.put(userid, new LinkedList<String>());
-			}
+			Boolean success = a.setUserRole(userid, rolename);
 
-			if(!roles.get(userid).contains(rolename)) {
-				roles.get(userid).add(rolename);
+			if(success) {
+				return Response.status(Status.CREATED).entity("Role added").build();
 			}
-
-			return Response.status(Status.CREATED).entity(rolename).build();
+			
+			return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 			return Response.status(Status.BAD_REQUEST).entity("BAD REQUEST").build();
@@ -91,13 +88,17 @@ public class RoleJaxRs extends Application {
 		System.out.println("User ID: " + userid);
 		System.out.println("Role:" + rolename);
 
-		if(roles.containsKey(userid)) {
-			if(roles.get(userid).contains(rolename)) {
-				return Response.status(Status.OK).entity("OK").build();
-			} 
-		} 
+		List<String> roles = a.getUserRoles(userid, clientid);
 		
-		return Response.status(Status.NOT_FOUND).entity("NOT FOUND").build();
+		if(roles != null) {
+			if(roles.contains(rolename)) {
+				return Response.status(Status.OK).entity("OK").build();
+			}
+
+			return Response.status(Status.NOT_FOUND).entity("ROLE NOT FOUND").build();
+		}
+		
+		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
 	}
 
 	@DELETE
@@ -110,14 +111,12 @@ public class RoleJaxRs extends Application {
 		System.out.println("User ID: " + userid);
 		System.out.println("Role:" + rolename);
 
-		if(roles.containsKey(userid)) {
-			if(roles.get(userid).contains(rolename)) {
-				roles.get(userid).remove(rolename);
-				return Response.status(Status.OK).entity("OK").build();
-			} 
-		} 
+		Boolean success = a.removeUserRole(userid, rolename);
 		
-		return Response.status(Status.NOT_FOUND).entity("NOT FOUND").build();
+		if(success) {
+			return Response.status(Status.OK).entity("Role deleted").build();
+		}
+		
+		return Response.status(Status.NOT_FOUND).entity("USER NOT FOUND").build();
 	}
-	
 }

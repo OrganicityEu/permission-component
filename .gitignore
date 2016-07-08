@@ -2,3 +2,4 @@
 .classpath
 .project
 .settings/
+src/main/java/eu/organicity/Config.java

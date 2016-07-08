@@ -1,0 +1,7 @@
+package eu.organicity;
+
+public class Config {
+
+	public static String basicAuth = "TOKEN";
+	
+}
