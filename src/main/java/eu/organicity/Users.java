@@ -13,9 +13,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -24,10 +27,10 @@ import eu.organicity.accounts.permissions.Accounts;
 @Path("/users")
 public class Users extends Application {
 
-	private Accounts a = new Accounts();
+	//private Accounts a = new Accounts();
 
 	public Users() {
-		a.login(Config.basicAuth);
+		//a.login(Config.basicAuth);
 	}
 	
 	@GET
@@ -42,6 +45,8 @@ public class Users extends Application {
 		System.out.println("###################");
 
 		try {
+			Accounts a = new Accounts();
+			a.login(Config.basicAuth);
 			List<String> roles = a.getUserRoles(userid, clientid);
 			if(roles != null) {
 				return Response.status(Status.OK).entity(roles).build();
@@ -58,7 +63,7 @@ public class Users extends Application {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles")
-	public Response postRole(@HeaderParam("X-ClientID") String clientid, @PathParam("userid") String userid, InputStream inputStream) {
+	public Response postRole(@HeaderParam("X-ClientID") String clientid, @Context UriInfo uriInfo, @PathParam("userid") String userid, InputStream inputStream) {
 
 		String rolename = null;
 		
@@ -78,10 +83,15 @@ public class Users extends Application {
 			System.out.println("User ID: " + userid);
 			System.out.println("####################");
 
+			Accounts a = new Accounts();
+			a.login(Config.basicAuth);
 			Boolean success = a.setUserRole(userid, rolename);
 
 			if(success) {
-				return Response.status(Status.CREATED).build();
+				//@see: http://stackoverflow.com/a/26094619/605890
+		        UriBuilder builder = uriInfo.getAbsolutePathBuilder();
+		        builder.path(rolename);
+		        return Response.created(builder.build()).build();
 			}
 			
 			return Response.status(Status.NOT_FOUND).build();
@@ -104,6 +114,8 @@ public class Users extends Application {
 		System.out.println("#####################");
 
 		try {
+			Accounts a = new Accounts();
+			a.login(Config.basicAuth);
 			Boolean success = a.removeUserRole(userid, rolename);
 			
 			if(success) {
@@ -129,6 +141,8 @@ public class Users extends Application {
 		System.out.println("##################");
 
 		try {
+			Accounts a = new Accounts();
+			a.login(Config.basicAuth);
 			List<String> roles = a.getUserRoles(userid, clientid);
 			
 			if(roles != null && roles.contains(rolename)) {
