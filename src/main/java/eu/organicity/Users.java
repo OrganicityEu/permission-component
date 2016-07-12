@@ -27,10 +27,10 @@ import eu.organicity.accounts.permissions.Accounts;
 @Path("/users")
 public class Users extends Application {
 
-	//private Accounts a = new Accounts();
+	private Accounts accounts;
 
 	public Users() {
-		//a.login(Config.basicAuth);
+		accounts = Accounts.withBasicAuth(Config.basicAuth);
 	}
 	
 	@GET
@@ -45,9 +45,7 @@ public class Users extends Application {
 		System.out.println("###################");
 
 		try {
-			Accounts a = new Accounts();
-			a.login(Config.basicAuth);
-			List<String> roles = a.getUserRoles(userid, clientid);
+			List<String> roles = accounts.getUserRoles(userid, clientid);
 			if(roles != null) {
 				return Response.status(Status.OK).entity(roles).build();
 			}
@@ -83,9 +81,7 @@ public class Users extends Application {
 			System.out.println("User ID: " + userid);
 			System.out.println("####################");
 
-			Accounts a = new Accounts();
-			a.login(Config.basicAuth);
-			Boolean success = a.setUserRole(userid, rolename);
+			Boolean success = accounts.setUserRole(userid, rolename);
 
 			if(success) {
 				//@see: http://stackoverflow.com/a/26094619/605890
@@ -114,9 +110,7 @@ public class Users extends Application {
 		System.out.println("#####################");
 
 		try {
-			Accounts a = new Accounts();
-			a.login(Config.basicAuth);
-			Boolean success = a.removeUserRole(userid, rolename);
+			Boolean success = accounts.removeUserRole(userid, rolename);
 			
 			if(success) {
 				return Response.status(Status.OK).build();
@@ -141,9 +135,7 @@ public class Users extends Application {
 		System.out.println("##################");
 
 		try {
-			Accounts a = new Accounts();
-			a.login(Config.basicAuth);
-			List<String> roles = a.getUserRoles(userid, clientid);
+			List<String> roles = accounts.getUserRoles(userid, clientid);
 			
 			if(roles != null && roles.contains(rolename)) {
 				return Response.status(Status.OK).build();
