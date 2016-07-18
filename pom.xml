@@ -39,6 +39,11 @@
 			<artifactId>java-jwt-parser</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.12</version>
+		</dependency>		
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>

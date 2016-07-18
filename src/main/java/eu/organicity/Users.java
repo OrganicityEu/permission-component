@@ -19,6 +19,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.log4j.Logger;
+
 import eu.organicity.accounts.permissions.Accounts;
 
 /**
@@ -33,8 +35,9 @@ import eu.organicity.accounts.permissions.Accounts;
 @Path("/users")
 public class Users extends Application {
 
+	private Logger log = Logger.getLogger(this.getClass().getName());
 	private Accounts accounts;
-
+	
 	public Users() {
 		accounts = Accounts.withBasicAuth(Config.basicAuth);
 	}
@@ -67,11 +70,11 @@ public class Users extends Application {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 		
-		System.out.println("#### Get Roles ####");
-		System.out.println("Client ID: " + clientid);
-		System.out.println("Client Roles: " + clientRoles.toString());
-		System.out.println("User ID: " + userid);
-		System.out.println("####################");		
+		log.info("#### Get Roles ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("User ID: " + userid);
+		log.info("####################");		
 		
 		if(hasReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
@@ -134,12 +137,12 @@ public class Users extends Application {
 		}		
 		
 		try {
-			System.out.println("#### Post Roles ####");
-			System.out.println("Client ID: " + clientid);
-			System.out.println("Client Roles: " + clientRoles.toString());
-			System.out.println("User ID: " + userid);
-			System.out.println("Role:" + rolename);
-			System.out.println("####################");
+			log.info("#### Post Roles ####");
+			log.info("Client ID: " + clientid);
+			log.info("Client Roles: " + clientRoles.toString());
+			log.info("User ID: " + userid);
+			log.info("Role:" + rolename);
+			log.info("####################");
 
 			String permission = accounts.isRealmRole(rolename) 
 				? AccessRoles.EDIT_GLOBAL_ROLES 
@@ -198,12 +201,12 @@ public class Users extends Application {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");		
 		
-		System.out.println("#### Delete Role ####");
-		System.out.println("Client ID: " + clientid);
-		System.out.println("Client Roles: " + clientRoles.toString());
-		System.out.println("User ID: " + userid);
-		System.out.println("Role:" + rolename);
-		System.out.println("#####################");
+		log.info("#### Delete Role ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("User ID: " + userid);
+		log.info("Role:" + rolename);
+		log.info("#####################");
 	
 		if(hasEditRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
@@ -265,12 +268,12 @@ public class Users extends Application {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");		
 		
-		System.out.println("#### Get Role ####");
-		System.out.println("Client ID: " + clientid);
-		System.out.println("Client Roles: " + clientRoles.toString());
-		System.out.println("User ID: " + userid);
-		System.out.println("Role:" + rolename);
-		System.out.println("##################");
+		log.info("#### Get Role ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("User ID: " + userid);
+		log.info("Role:" + rolename);
+		log.info("##################");
 
 		if(hasReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
