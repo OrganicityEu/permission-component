@@ -2,6 +2,11 @@ package eu.organicity;
 
 import java.util.Base64;
 
+/**
+ * The cnfiguration for the Permission tool.
+ * 
+ * @author Dennis Boldt
+ */
 public class Config {
 
 	// Basic Auth token of the `Permission Component`

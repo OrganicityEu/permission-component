@@ -39,24 +39,25 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         try {
 
             // Validate the token
-            String clientid = validateToken(token);
-            requestContext.getHeaders().add("X-ClientID", clientid);            
+            Claims claims = validateToken(token);
+            requestContext.getHeaders().add("X-ClientID", (String) claims.get("clientId"));
+            requestContext.getHeaders().add("X-Sub", (String) claims.get("sub"));
         } catch (Exception e) {
             System.err.println("Token invalid: " + e.getMessage());
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }
     }
 
-    private String validateToken(String token) throws Exception {
+    private Claims validateToken(String token) throws Exception {
 		JwtParser fwtparser = new JwtParser();
 		Claims claims = fwtparser.parseJWT(token);
-		System.out.println("Component realm: " + claims.get("aud"));
+		System.out.println("ClientId: " + claims.get("clientId"));
 		
 		/*
 		 * TODO: Check, if client ID has "role" to change the permissions
 		 * If not, 403 Forbidden
 		 */
 		
-		return (String) claims.get("aud");
+		return claims;
     }
 }
