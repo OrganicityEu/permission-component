@@ -4,6 +4,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 
 /**
  * This is the interface for the basic `Role`
+ * 
  * @author Dennis Boldt
  */
 @JsonDeserialize(as=RoleImpl.class)

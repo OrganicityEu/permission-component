@@ -11,6 +11,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -22,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.log4j.Logger;
 
 import eu.organicity.accounts.permissions.Accounts;
+import eu.organicity.accounts.permissions.UserIdentifier;
 
 /**
  * This is the implementation of the "Organicity Accounts - Permission Component", version `0.1.3-development`, 
@@ -41,7 +43,76 @@ public class Users extends Application {
 	public Users() {
 		accounts = Accounts.withBasicAuth(Config.basicAuth);
 	}
-	
+
+	/**
+	 * This endpoint supplies a list of available user names and userIds that
+	 * can be used for the more detailed actions.
+	 *
+	 * @param clientid The client id, forwarded by the AuthenticationFilter
+	 * @param sub The subject, forwarded by the AuthenticationFilter
+	 * @param offset The offset in the list of users, given as the amount of
+	 * 			users to skip. Defaults to 0, thus returning the start of
+	 * 			the list.
+	 * @param count The maximum amount of users to return as the result of the
+	 *			call. Only values between 1 and 50 are allowed, in order to
+	 * 			limit the result size. Defaults to 50.
+	 * @return A HTTP response:
+	 * 	200 OK - The requested list of users has been extracted and is returned
+	 * 		as the body of the reply. If no users matched the query (i.e. the
+	 * 		offset is too high), an empty array may be returned.
+	 * 	401 Unauthorized - The requesting client did not supply identify information
+	 * 		(Handled by the AuthenticationFilter)
+	 * 	403 Forbidden - The requesting client does not have sufficient permissions
+	 * 		to inspect the roles of users.
+	 * 	422 Unprocessable Entity - The given query parameters where not valid.
+	 * 		This might occur if either the given offset or count where negative,
+	 * 		or if count was too large.
+	 */
+	@GET
+	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/")
+	public Response getallUsers(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@QueryParam("offset") Integer offset,
+		@QueryParam("count") Integer count
+	) {
+
+		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
+
+		if(offset == null) {
+			offset = 0;
+		}
+
+		if(count == null) {
+			count = 50;
+		}
+		
+		log.info("#### Get Role ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("From: " + offset);
+		log.info("To:" + count);
+		log.info("##################");
+
+		if(!hasListUsersRole(clientRoles)) {
+			return Response.status(Status.FORBIDDEN).build();
+		}
+
+	    if (offset < 0 || count <= 0 || count > 50) {
+	    	return Response.status(422).entity("Offset or count values not valid").build();
+	    }
+
+		List<UserIdentifier> userIdentifiers = accounts.getUsers(offset, count);
+		List<User> users = new LinkedList<>();
+		for (UserIdentifier userIdentifier : userIdentifiers) {
+			users.add(new UserImpl(userIdentifier));
+		}
+
+		return Response.ok(users).build();
+	}
+
 	/**
 	 * This endpoint retrieves a list of all roles available to the supplied 
 	 * user and visible to the requesting tool. This includes global roles as 
@@ -76,7 +147,7 @@ public class Users extends Application {
 		log.info("User ID: " + userid);
 		log.info("####################");		
 		
-		if(hasReadRole(clientRoles)) {
+		if(!hasReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
 		
@@ -132,7 +203,7 @@ public class Users extends Application {
 		String rolename = role.getRole();
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 		
-		if(hasEditRole(clientRoles)) {
+		if(!hasEditRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -196,8 +267,7 @@ public class Users extends Application {
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
-		@PathParam("rolename"
-	) String rolename) {
+		@PathParam("rolename") String rolename) {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");		
 		
@@ -208,7 +278,7 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("#####################");
 	
-		if(hasEditRole(clientRoles)) {
+		if(!hasEditRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -258,6 +328,7 @@ public class Users extends Application {
 	 */
 	@GET
 	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles/{rolename}")
 	public Response getRoleByName(
 		@HeaderParam("X-ClientID") String clientid, 
@@ -275,7 +346,7 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("##################");
 
-		if(hasReadRole(clientRoles)) {
+		if(!hasReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -320,7 +391,7 @@ public class Users extends Application {
 	 * @return true, if the user has the role, otherwise false
 	 */
 	private boolean hasReadRole(List<String> clientRoles) {
-		return !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES) && !clientRoles.contains(AccessRoles.READ_LOCAL_ROLES);
+		return clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.READ_LOCAL_ROLES);
 	}
 	
 	/**
@@ -330,8 +401,17 @@ public class Users extends Application {
 	 * @return true, if the user has the role, otherwise false
 	 */
 	private boolean hasEditRole(List<String> clientRoles) {
-		return !clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES) && !clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES);
-	}		
+		return clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES);
+	}
 	
+	/**
+	 * Checks, if the user has the role `accounts-permissions:listUsers`
+	 *
+	 * @param clientRoles A list of roles which the user has
+	 * @return true, if the user has the role, otherwise false
+	 */
+	private boolean hasListUsersRole(List<String> clientRoles) {
+		return clientRoles.contains(AccessRoles.LIST_USERS);
+	}
 	
 }
