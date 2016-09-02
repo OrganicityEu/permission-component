@@ -19,8 +19,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.organicity.accounts.permissions.Accounts;
 import eu.organicity.accounts.permissions.UserIdentifier;
@@ -37,10 +37,19 @@ import eu.organicity.accounts.permissions.UserIdentifier;
 @Path("/users")
 public class Users extends Application {
 
-	private Logger log = Logger.getLogger(this.getClass().getName());
+	private static Logger log = LoggerFactory.getLogger(Users.class);
+
 	private Accounts accounts;
 	
 	public Users() {
+		
+		Users.log.info("####################################################################");
+		Users.log.info("java.home: " + System.getProperty("java.home"));
+		Users.log.info("java.version: " + System.getProperty("java.version"));
+		Users.log.info("javax.net.ssl.trustStore: " + System.getProperty("javax.net.ssl.trustStore"));
+		Users.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
+		Users.log.info("####################################################################");
+		
 		accounts = Accounts.withBasicAuth(Config.basicAuth);
 	}
 
