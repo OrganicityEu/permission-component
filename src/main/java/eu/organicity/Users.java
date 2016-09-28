@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -19,10 +20,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.organicity.accounts.permissions.Accounts;
+import eu.organicity.accounts.permissions.MySqlConfig;
 import eu.organicity.accounts.permissions.UserIdentifier;
 
 /**
@@ -50,7 +53,8 @@ public class Users extends Application {
 		Users.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
 		Users.log.info("####################################################################");
 		
-		accounts = Accounts.withBasicAuth(Config.basicAuth);
+		MySqlConfig mysqlConfig = new MySqlConfig(Config.connectionUrl, Config.connectionUser, Config.connectionPassword);
+		accounts = Accounts.withBasicAuth(Config.basicAuth, mysqlConfig);
 	}
 
 	/**
@@ -65,6 +69,11 @@ public class Users extends Application {
 	 * @param count The maximum amount of users to return as the result of the
 	 *			call. Only values between 1 and 50 are allowed, in order to
 	 * 			limit the result size. Defaults to 50.
+	 * @param email By using this parameter, it is possible to search for users
+	 * 			with a given email. This should return at most one user. Using
+	 * 			this parameter, the role `account-permissions:findUserByEmail`
+	 * 			is required
+	 *
 	 * @return A HTTP response:
 	 * 	200 OK - The requested list of users has been extracted and is returned
 	 * 		as the body of the reply. If no users matched the query (i.e. the
@@ -73,6 +82,7 @@ public class Users extends Application {
 	 * 		(Handled by the AuthenticationFilter)
 	 * 	403 Forbidden - The requesting client does not have sufficient permissions
 	 * 		to inspect the roles of users.
+	 *  404 Not Found - The entity cannot be found (using the parameter email)
 	 * 	422 Unprocessable Entity - The given query parameters where not valid.
 	 * 		This might occur if either the given offset or count where negative,
 	 * 		or if count was too large.
@@ -84,42 +94,47 @@ public class Users extends Application {
 	public Response getallUsers(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
-		@QueryParam("offset") Integer offset,
-		@QueryParam("count") Integer count
+		@DefaultValue("0") @QueryParam("offset") Integer offset,
+		@DefaultValue("50") @QueryParam("count") Integer count,
+        @QueryParam("email") String email
 	) {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 
-		if(offset == null) {
-			offset = 0;
-		}
-
-		if(count == null) {
-			count = 50;
-		}
-		
 		log.info("#### Get Role ####");
 		log.info("Client ID: " + clientid);
 		log.info("Client Roles: " + clientRoles.toString());
 		log.info("From: " + offset);
 		log.info("To:" + count);
+		log.info("Mail:" + email);
 		log.info("##################");
 
-		if(!hasListUsersRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
-
-	    if (offset < 0 || count <= 0 || count > 50) {
-	    	return Response.status(422).entity("Offset or count values not valid").build();
-	    }
-
-		List<UserIdentifier> userIdentifiers = accounts.getUsers(offset, count);
 		List<User> users = new LinkedList<>();
-		for (UserIdentifier userIdentifier : userIdentifiers) {
-			users.add(new UserImpl(userIdentifier));
+
+		if(email != null) {
+			if(hasfindUserByEmailRole(clientRoles)) {
+				UserIdentifier userIdentifier = accounts.findUserByEmail(email);
+				if(userIdentifier != null) {
+					users.add(new UserImpl(userIdentifier));
+					return Response.ok(users).build();
+				}
+
+				return Response.status(Status.NOT_FOUND).build();
+			}
+		} else if(hasListUsersRole(clientRoles)) {
+		    if (offset < 0 || count <= 0 || count > 50) {
+		    	return Response.status(422).entity("Offset or count values not valid").build();
+		    }
+
+			List<UserIdentifier> userIdentifiers = accounts.getUsers(offset, count);
+			for (UserIdentifier userIdentifier : userIdentifiers) {
+				users.add(new UserImpl(userIdentifier));
+			}
+
+			return Response.ok(users).build();
 		}
 
-		return Response.ok(users).build();
+		return Response.status(Status.FORBIDDEN).build();
 	}
 
 	/**
@@ -374,7 +389,7 @@ public class Users extends Application {
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
-	
+
 	//#########################################################################
 	// Local helper
 	//#########################################################################
@@ -423,4 +438,8 @@ public class Users extends Application {
 		return clientRoles.contains(AccessRoles.LIST_USERS);
 	}
 	
+	private boolean hasfindUserByEmailRole(List<String> clientRoles) {
+		return clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL);
+	}
+
 }
