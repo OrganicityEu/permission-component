@@ -14,4 +14,8 @@ public class Config {
 	private static String password = "password";
 	public static String basicAuth = new String(Base64.encodeBase64((user + ":" + password).getBytes()));
 	
+	// MySQL of the Keycloak
+	public static String connectionUrl = "jdbc:mysql://localhost:3306/DATABASE";
+	public static String connectionUser = "DB-USER";
+	public static String connectionPassword = "DB-PASS";
 }
