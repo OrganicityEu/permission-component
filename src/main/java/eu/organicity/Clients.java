@@ -72,6 +72,12 @@ public class Clients extends Application{
 
 			JSONObject jsonObject = accounts.registerClient(client.getClientName(), client.getClientUri(), client.getRedirectUri());
 			if(jsonObject != null) {
+				String clientName = jsonObject.get("client_id").toString();
+				// Remove the global scope
+				accounts.setFullScope(clientName, false);
+				// Set experimenter and participant role
+				accounts.setClientScopeRole(clientName, "experimenter");
+				accounts.setClientScopeRole(clientName, "participant");
 				return Response.status(201).entity(jsonObject.toString()).build();
 			}
 			
