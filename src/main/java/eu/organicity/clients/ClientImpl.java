@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.clients;
 
 /**
  * This implements the basic role.

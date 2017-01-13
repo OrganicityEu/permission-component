@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.users;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +24,9 @@ import javax.ws.rs.core.UriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.organicity.AccessRoles;
+import eu.organicity.Config;
+import eu.organicity.Secured;
 import eu.organicity.accounts.permissions.Accounts;
 import eu.organicity.accounts.permissions.MySqlConfig;
 import eu.organicity.accounts.permissions.UserIdentifier;

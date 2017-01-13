@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.clients;
 
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 

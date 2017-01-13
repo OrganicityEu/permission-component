@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.clients;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +22,12 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.organicity.AccessRoles;
+import eu.organicity.Config;
+import eu.organicity.Secured;
 import eu.organicity.accounts.permissions.Accounts;
 import eu.organicity.accounts.permissions.MySqlConfig;
+import eu.organicity.users.Users;
 
 @Path("/clients")
 public class Clients extends Application{

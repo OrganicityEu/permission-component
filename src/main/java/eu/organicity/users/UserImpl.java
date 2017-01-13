@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.users;
 
 import eu.organicity.accounts.permissions.UserIdentifier;
 

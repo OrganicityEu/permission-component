@@ -1,4 +1,4 @@
-package eu.organicity;
+package eu.organicity.users;
 
 /**
  * This implements the basic role.
