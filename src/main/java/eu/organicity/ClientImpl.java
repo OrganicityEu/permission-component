@@ -14,12 +14,6 @@ public class ClientImpl implements Client {
 	// Needed by Jackson
 	public ClientImpl() {}
 	
-	public ClientImpl(String clientName, String clientUri, String redirectUri) {
-		setClientName(clientName);
-		setClientUri(clientUri);
-		setRedirectUri(redirectUri);
-	}
-
 	@Override
 	public String getClientName() {
 		return clientName;
@@ -49,7 +43,6 @@ public class ClientImpl implements Client {
 	public void setRedirectUri(String redirectUri) {
 		this.redirectUri = redirectUri;
 	}
-	
 
 	@Override
 	public boolean equals(Object o) {
