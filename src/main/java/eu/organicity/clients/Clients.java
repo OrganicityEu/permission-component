@@ -53,12 +53,10 @@ public class Clients extends Application{
 	@Secured
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/")
 	public Response postRole(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
 		@Context UriInfo uriInfo,
-		@PathParam("userid") String userid,
 		Client client
 	) {
 
@@ -71,7 +69,6 @@ public class Clients extends Application{
 			log.info("#### Create new Client ####");
 			log.info("Client ID: " + clientid);
 			log.info("Client Roles: " + clientRoles.toString());
-			log.info("User ID: " + userid);
 			log.info("New Client Name:" + client.getClientName());
 			log.info("New Client URI:" + client.getClientUri());
 			log.info("New Redirect URI:" + client.getRedirectUri());
@@ -97,6 +94,7 @@ public class Clients extends Application{
 
 	/*
 	 * Like this, it is not REST conform
+	 * Thus, it is DEPRICATED
 	 */
 	@POST
 	@Secured
@@ -108,12 +106,20 @@ public class Clients extends Application{
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
 		@Context UriInfo uriInfo,
-		@PathParam("userid") String userid,
 		Client client
 	) {
-		return postRole(clientid, sub, uriInfo, userid, client);
+		return postRole(clientid, sub, uriInfo, client);
 	}
 
+	/**
+	 * TODO
+	 * 
+	 * @param clientid
+	 * @param sub
+	 * @param uriInfo
+	 * @param clientName
+	 * @return
+	 */
 	@GET
 	@Secured
 	@Produces({ MediaType.APPLICATION_JSON })
@@ -131,7 +137,7 @@ public class Clients extends Application{
 
 		try {
 			log.info("#### Get redirect URIs for a given client ####");
-			log.info("Client ID: " + clientid);
+			log.info("Client ID: " +clientid);
 			log.info("Client Roles: " + clientRoles.toString());
 			log.info("Client Name: " + clientName);
 			log.info("##############################################");
@@ -144,7 +150,7 @@ public class Clients extends Application{
 
 			RedirectUri redirectUris = new RedirectUriImpl();
 			redirectUris.setRedirectUris(uris);
-			return Response.status(201).entity(redirectUris).build();
+			return Response.status(200).entity(redirectUris).build();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -155,7 +161,6 @@ public class Clients extends Application{
 
 	@PUT
 	@Secured
-	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{clientName}/redirecturis")
 	public Response putRedirectUris(
 		@HeaderParam("X-ClientID") String clientid,
@@ -242,7 +247,7 @@ public class Clients extends Application{
 	}	
 
 	private boolean hasReadClientRedirectUriRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_CLIENT_REDIRECTURIS);
+		return clientRoles.contains(AccessRoles.READ_CLIENT_REDIRECTURIS);
 	}
 
 	private boolean hasUpdateClientRedirectUriRole(List<String> clientRoles) {

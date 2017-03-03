@@ -11,13 +11,19 @@ public class UserImpl implements User {
 
 	private String id;
 	private String name;
+	private String firstName;
+	private String lastName;
+	private String email;
 
-	// Needed by Jackson
+	// Needed by Jackson/JAX-B
 	public UserImpl() {}
 	
 	public UserImpl(UserIdentifier user) {
 		setId(user.getId());
 		setName(user.getName());
+		setFirstName(user.getFirstName());
+		setLastName(user.getLastName());
+		setEmail(user.getEmail());
 	}
 	
 	@Override
@@ -38,6 +44,30 @@ public class UserImpl implements User {
 	@Override
 	public String getName() {
 		return this.name;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	@Override

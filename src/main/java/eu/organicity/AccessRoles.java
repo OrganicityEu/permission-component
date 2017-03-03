@@ -17,6 +17,7 @@ public class AccessRoles {
 
 	public static String LIST_USERS = "accounts-permissions:listUsers";
 	public static String FIND_USER_BY_MAIL = "accounts-permissions:findUserByEmail";
+	public static String GET_USER_DETAILS = "accounts-permissions:getUserDetails";
 
 	/*
 	 * CLIENTS

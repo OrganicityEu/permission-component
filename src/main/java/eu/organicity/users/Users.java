@@ -93,7 +93,6 @@ public class Users extends Application {
 	@GET
 	@Secured
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/")
 	public Response getallUsers(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
@@ -115,7 +114,7 @@ public class Users extends Application {
 		List<User> users = new LinkedList<>();
 
 		if(email != null) {
-			if(hasfindUserByEmailRole(clientRoles)) {
+			if(hasRolefindUserByEmail(clientRoles)) {
 				UserIdentifier userIdentifier = accounts.findUserByEmail(email);
 				if(userIdentifier != null) {
 					users.add(new UserImpl(userIdentifier));
@@ -124,7 +123,7 @@ public class Users extends Application {
 
 				return Response.status(Status.NOT_FOUND).build();
 			}
-		} else if(hasListUsersRole(clientRoles)) {
+		} else if(hasRoleListUsers(clientRoles)) {
 		    if (offset < 0 || count <= 0 || count > 50) {
 		    	return Response.status(422).entity("Offset or count values not valid").build();
 		    }
@@ -134,10 +133,50 @@ public class Users extends Application {
 				users.add(new UserImpl(userIdentifier));
 			}
 
-			return Response.ok(users).build();
+			if(users.size() > 0) {
+				return Response.ok(users).build();
+			}
+
+			return Response.status(Status.NOT_FOUND).build();
 		}
 
 		return Response.status(Status.FORBIDDEN).build();
+	}
+
+	@GET
+	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}")
+	public Response getUserById(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid
+	) {
+
+		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
+
+		log.info("#### Get User by ID ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("User ID: " + userid);
+		log.info("########################");
+
+		if(!hasRoleGetUserDetails(clientRoles)) {
+			return Response.status(Status.FORBIDDEN).build();
+		}
+
+		try {
+			UserIdentifier userIdentifier = accounts.getUserById(userid);
+			if(userIdentifier != null) {
+				User user = new UserImpl(userIdentifier);
+				return Response.ok(user).build();
+			}
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+
 	}
 
 	/**
@@ -159,7 +198,7 @@ public class Users extends Application {
 	@GET
 	@Secured
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/{userid}/roles")
+	@Path("/{userid}/permissions")
 	public Response getAllRoles(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
@@ -174,7 +213,7 @@ public class Users extends Application {
 		log.info("User ID: " + userid);
 		log.info("####################");		
 		
-		if(!hasReadRole(clientRoles)) {
+		if(!hasRoleReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
 		
@@ -190,7 +229,20 @@ public class Users extends Application {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-		}			
+		}
+	}
+
+	@GET
+	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}/roles")
+	@Deprecated
+	public Response getAllRolesDepricated(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid
+	) {
+		return getAllRoles(clientid, sub, userid);
 	}
 	
 	/**
@@ -218,7 +270,7 @@ public class Users extends Application {
 	@Secured
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/{userid}/roles")
+	@Path("/{userid}/permissions")
 	public Response postRole(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
@@ -230,7 +282,7 @@ public class Users extends Application {
 		String rolename = role.getRole();
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 		
-		if(!hasEditRole(clientRoles)) {
+		if(!hasRoleEditRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -265,6 +317,22 @@ public class Users extends Application {
 		}
 	}	
 
+	@POST
+	@Secured
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}/roles")
+	@Deprecated
+	public Response postRoleDepricated(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@Context UriInfo uriInfo,
+		@PathParam("userid") String userid,
+		Role role
+	) {
+		return postRole(clientid, sub, uriInfo, userid, role);
+	}
+
 	/**
 	 * This endpoint allows a requesting client to remove a role from a user, 
 	 * effectively revoking permissions or access to specific resources.
@@ -289,7 +357,7 @@ public class Users extends Application {
 	 */
 	@DELETE
 	@Secured
-	@Path("/{userid}/roles/{rolename}")
+	@Path("/{userid}/permissions/{rolename}")
 	public Response deleteRoleByName(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
@@ -305,7 +373,7 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("#####################");
 	
-		if(!hasEditRole(clientRoles)) {
+		if(!hasRoleEditRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -332,6 +400,18 @@ public class Users extends Application {
 		}
 	}
 	
+	@DELETE
+	@Secured
+	@Path("/{userid}/roles/{rolename}")
+	@Deprecated
+	public Response deleteRoleByNameDepricated(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid,
+		@PathParam("rolename") String rolename) {
+		return deleteRoleByName(clientid, sub, userid, rolename);
+	}
+
 	/**
 	 * This endpoint can be used if a tool is not interested in the complete 
 	 * list of assigned roles, but wants to check one specific role for a user.
@@ -356,7 +436,7 @@ public class Users extends Application {
 	@GET
 	@Secured
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/{userid}/roles/{rolename}")
+	@Path("/{userid}/permissions/{rolename}")
 	public Response getRoleByName(
 		@HeaderParam("X-ClientID") String clientid, 
 		@HeaderParam("X-Sub") String sub,
@@ -373,7 +453,7 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("##################");
 
-		if(!hasReadRole(clientRoles)) {
+		if(!hasRoleReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
 		
@@ -391,6 +471,20 @@ public class Users extends Application {
 			e.printStackTrace();
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
+	}
+
+	@GET
+	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}/roles/{rolename}")
+	@Deprecated
+	public Response getRoleByNameDepriocated(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid,
+		@PathParam("rolename") String rolename
+	) {
+		return getRoleByName(clientid, sub, userid, rolename);
 	}
 
 	//#########################################################################
@@ -417,7 +511,7 @@ public class Users extends Application {
 	 * @param clientRoles A list of roles which the user has
 	 * @return true, if the user has the role, otherwise false
 	 */
-	private boolean hasReadRole(List<String> clientRoles) {
+	private boolean hasRoleReadRole(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.READ_LOCAL_ROLES);
 	}
 	
@@ -427,7 +521,7 @@ public class Users extends Application {
 	 * @param clientRoles A list of roles which the user has
 	 * @return true, if the user has the role, otherwise false
 	 */
-	private boolean hasEditRole(List<String> clientRoles) {
+	private boolean hasRoleEditRole(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES);
 	}
 	
@@ -437,12 +531,16 @@ public class Users extends Application {
 	 * @param clientRoles A list of roles which the user has
 	 * @return true, if the user has the role, otherwise false
 	 */
-	private boolean hasListUsersRole(List<String> clientRoles) {
+	private boolean hasRoleListUsers(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.LIST_USERS);
 	}
 	
-	private boolean hasfindUserByEmailRole(List<String> clientRoles) {
+	private boolean hasRolefindUserByEmail(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL);
+	}
+
+	private boolean hasRoleGetUserDetails(List<String> clientRoles) {
+		return clientRoles.contains(AccessRoles.GET_USER_DETAILS);
 	}
 
 }
