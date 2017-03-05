@@ -9,6 +9,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,6 +181,52 @@ public class Users extends Application {
 
 	}
 
+	@PUT
+	@Secured
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}")
+	public Response updateUserById(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid,
+		@Context UriInfo uriInfo,
+		User user
+	) {
+
+		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
+
+		log.info("#### Get User by ID ####");
+		log.info("Client ID: " + clientid);
+		log.info("Client Roles: " + clientRoles.toString());
+		log.info("User ID: " + userid);
+		log.info("########################");
+
+		if(!hasRoleEditUserDetails(clientRoles)) {
+			return Response.status(Status.FORBIDDEN).build();
+		}
+
+		try {
+			// Convert JAX-RS presentation to accounts-permissions presentation
+			UserIdentifier u = new UserIdentifier();
+			u.setId(user.getId());
+			u.setEmail(user.getEmail());
+			u.setFirstName(user.getFirstName());
+			u.setLastName(user.getLastName());
+			u.setName(user.getName());
+
+			try {
+				accounts.updateUserById(userid, u);
+				return Response.ok(user).build();
+			} catch (Exception e) {
+	    		JSONObject error = new JSONObject().put("error", e.getMessage());
+				return Response.status(Status.BAD_REQUEST).entity(error.toString()).build();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+	}
+
 	/**
 	 * This endpoint retrieves a list of all roles available to the supplied 
 	 * user and visible to the requesting tool. This includes global roles as 
@@ -274,8 +322,8 @@ public class Users extends Application {
 	public Response postRole(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
-		@Context UriInfo uriInfo,
 		@PathParam("userid") String userid,
+		@Context UriInfo uriInfo,
 		Role role
 	) {
 
@@ -326,11 +374,11 @@ public class Users extends Application {
 	public Response postRoleDepricated(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
-		@Context UriInfo uriInfo,
 		@PathParam("userid") String userid,
+		@Context UriInfo uriInfo,
 		Role role
 	) {
-		return postRole(clientid, sub, uriInfo, userid, role);
+		return postRole(clientid, sub, userid, uriInfo, role);
 	}
 
 	/**
@@ -456,7 +504,7 @@ public class Users extends Application {
 		if(!hasRoleReadRole(clientRoles)) {
 			return Response.status(Status.FORBIDDEN).build();
 		}		
-		
+
 		try {
 			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES);
 			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES) ? clientid : null;
@@ -541,6 +589,10 @@ public class Users extends Application {
 
 	private boolean hasRoleGetUserDetails(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.GET_USER_DETAILS);
+	}
+
+	private boolean hasRoleEditUserDetails(List<String> clientRoles) {
+		return clientRoles.contains(AccessRoles.EDIT_USER_DETAILS);
 	}
 
 }
