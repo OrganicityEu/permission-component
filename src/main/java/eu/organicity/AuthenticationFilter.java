@@ -58,17 +58,20 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             System.err.println("Token invalid: " + e.getMessage());
             throw new NotAuthorizedException("The provided Bearer token is not valid.", Response.status(Status.UNAUTHORIZED).build());
         }
+        String sub = (String) claims.get("sub");
 
+        System.out.println("Sub: " + sub);
         // Validate the roles
         List<AccessRoles> rolesFound = validateRoles(claims);
+        System.out.println("Roles: " + rolesFound.toString());
         
         requestContext.getHeaders().add("X-ClientID", (String) claims.get("clientId"));
         requestContext.getHeaders().add("X-Client-Roles", Utils.convertAccessRolesToRolesString(rolesFound)); 
-        requestContext.getHeaders().add("X-Sub", (String) claims.get("sub"));
+        requestContext.getHeaders().add("X-Sub", sub);
     }
     
     private List<AccessRoles> validateRoles(Claims claims) {
-
+    	
         // Get the resource method which matches with the requested URL
         // Extract the roles declared by it
         Method resourceMethod = resourceInfo.getResourceMethod();

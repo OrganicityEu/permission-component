@@ -55,4 +55,14 @@ public enum AccessRoles {
        return this.name;
     }
 
+    // @see: https://stackoverflow.com/questions/604424/lookup-enum-by-string-value
+    public static AccessRoles fromString(String text) {
+        for (AccessRoles b : AccessRoles.values()) {
+          if (b.name.equalsIgnoreCase(text)) {
+            return b;
+          }
+        }
+        return null;
+      }
+    
 }
