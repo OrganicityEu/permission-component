@@ -38,12 +38,12 @@ public class Clients extends Application{
 	
 	public Clients() {
 		
-		Clients.log.info("####################################################################");
-		Clients.log.info("java.home: " + System.getProperty("java.home"));
-		Clients.log.info("java.version: " + System.getProperty("java.version"));
-		Clients.log.info("javax.net.ssl.trustStore: " + System.getProperty("javax.net.ssl.trustStore"));
-		Clients.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
-		Clients.log.info("####################################################################");
+		//Clients.log.info("####################################################################");
+		//Clients.log.info("java.home: " + System.getProperty("java.home"));
+		//Clients.log.info("java.version: " + System.getProperty("java.version"));
+		//Clients.log.info("javax.net.ssl.trustStore: " + System.getProperty("javax.net.ssl.trustStore"));
+		//Clients.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
+		//Clients.log.info("####################################################################");
 		
 		MySqlConfig mysqlConfig = new MySqlConfig(Config.connectionUrl, Config.connectionUser, Config.connectionPassword);
 		accounts = Accounts.withBasicAuth(Config.basicAuth, mysqlConfig);
@@ -244,7 +244,7 @@ public class Clients extends Application{
 
 	private boolean hasCreateClientRole(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.CREATE_CLIENT);
-	}	
+	}
 
 	private boolean hasReadClientRedirectUriRole(List<String> clientRoles) {
 		return clientRoles.contains(AccessRoles.READ_CLIENT_REDIRECTURIS);

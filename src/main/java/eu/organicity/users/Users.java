@@ -51,12 +51,12 @@ public class Users extends Application {
 	
 	public Users() {
 		
-		Users.log.info("####################################################################");
-		Users.log.info("java.home: " + System.getProperty("java.home"));
-		Users.log.info("java.version: " + System.getProperty("java.version"));
-		Users.log.info("javax.net.ssl.trustStore: " + System.getProperty("javax.net.ssl.trustStore"));
-		Users.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
-		Users.log.info("####################################################################");
+		//Users.log.info("####################################################################");
+		//Users.log.info("java.home: " + System.getProperty("java.home"));
+		//Users.log.info("java.version: " + System.getProperty("java.version"));
+		//Users.log.info("javax.net.ssl.trustStore: " + System.getProperty("javax.net.ssl.trustStore"));
+		//Users.log.info("javax.net.ssl.trustStorePassword: " + System.getProperty("javax.net.ssl.trustStorePassword"));
+		//Users.log.info("####################################################################");
 		
 		MySqlConfig mysqlConfig = new MySqlConfig(Config.connectionUrl, Config.connectionUser, Config.connectionPassword);
 		accounts = Accounts.withBasicAuth(Config.basicAuth, mysqlConfig);
@@ -105,7 +105,7 @@ public class Users extends Application {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 
-		log.info("#### Get Role ####");
+		log.info("#### Get all users ####");
 		log.info("Client ID: " + clientid);
 		log.info("Client Roles: " + clientRoles.toString());
 		log.info("From: " + offset);
@@ -255,7 +255,7 @@ public class Users extends Application {
 
 		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 		
-		log.info("#### Get Roles ####");
+		log.info("#### Get permissions of an user ####");
 		log.info("Client ID: " + clientid);
 		log.info("Client Roles: " + clientRoles.toString());
 		log.info("User ID: " + userid);
