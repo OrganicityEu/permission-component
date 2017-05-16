@@ -243,15 +243,15 @@ public class Clients extends Application{
 	}	
 
 	private boolean hasCreateClientRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.CREATE_CLIENT);
+		return clientRoles.contains(AccessRoles.CREATE_CLIENT.toString());
 	}
 
 	private boolean hasReadClientRedirectUriRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.READ_CLIENT_REDIRECTURIS);
+		return clientRoles.contains(AccessRoles.READ_CLIENT_REDIRECTURIS.toString());
 	}
 
 	private boolean hasUpdateClientRedirectUriRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_CLIENT_REDIRECTURIS);
+		return clientRoles.contains(AccessRoles.EDIT_CLIENT_REDIRECTURIS.toString());
 	}
 
 	

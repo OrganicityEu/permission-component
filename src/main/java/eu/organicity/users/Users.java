@@ -267,8 +267,8 @@ public class Users extends Application {
 		
 		try {
 			// If this is reached, the client has one of the given roles.
-			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES);
-			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES) ? clientid : null;
+			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString());
+			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString()) ? clientid : null;
 			List<String> roles = accounts.getUserRoles(userid, clientid2, clientOnly);
 			if(roles == null) {
 				return Response.status(Status.NOT_FOUND).build();
@@ -342,11 +342,11 @@ public class Users extends Application {
 			log.info("Role:" + rolename);
 			log.info("####################");
 
-			String permission = accounts.isRealmRole(rolename) 
+			AccessRoles permission = accounts.isRealmRole(rolename) 
 				? AccessRoles.EDIT_GLOBAL_ROLES 
 				: AccessRoles.EDIT_LOCAL_ROLES;
 			
-			if(clientRoles.contains(permission)) {
+			if(clientRoles.contains(permission.toString())) {
 				Boolean success = accounts.setUserRole(userid, rolename);
 				
 				if(success) {
@@ -427,11 +427,11 @@ public class Users extends Application {
 		
 		try {
 			
-			String permission = accounts.isRealmRole(rolename) 
+			AccessRoles permission = accounts.isRealmRole(rolename) 
 					? AccessRoles.EDIT_GLOBAL_ROLES 
 					: AccessRoles.EDIT_LOCAL_ROLES;
 				
-			if(clientRoles.contains(permission)) {
+			if(clientRoles.contains(permission.toString())) {
 				Boolean success = accounts.removeUserRole(userid, rolename);
 				
 				if(success) {
@@ -506,8 +506,8 @@ public class Users extends Application {
 		}		
 
 		try {
-			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES);
-			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES) ? clientid : null;
+			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString());
+			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString()) ? clientid : null;
 			List<String> roles = accounts.getUserRoles(userid, clientid2, clientOnly);
 			
 			if(roles != null && roles.contains(rolename)) {
@@ -560,7 +560,7 @@ public class Users extends Application {
 	 * @return true, if the user has the role, otherwise false
 	 */
 	private boolean hasRoleReadRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.READ_LOCAL_ROLES);
+		return clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString()) || clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString());
 	}
 	
 	/**
@@ -570,7 +570,7 @@ public class Users extends Application {
 	 * @return true, if the user has the role, otherwise false
 	 */
 	private boolean hasRoleEditRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES) || clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES);
+		return clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES.toString()) || clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES.toString());
 	}
 	
 	/**
@@ -580,19 +580,19 @@ public class Users extends Application {
 	 * @return true, if the user has the role, otherwise false
 	 */
 	private boolean hasRoleListUsers(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.LIST_USERS);
+		return clientRoles.contains(AccessRoles.LIST_USERS.toString());
 	}
 	
 	private boolean hasRolefindUserByEmail(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL);
+		return clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL.toString());
 	}
 
 	private boolean hasRoleGetUserDetails(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.GET_USER_DETAILS);
+		return clientRoles.contains(AccessRoles.GET_USER_DETAILS.toString());
 	}
 
 	private boolean hasRoleEditUserDetails(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_USER_DETAILS);
+		return clientRoles.contains(AccessRoles.EDIT_USER_DETAILS.toString());
 	}
 
 }

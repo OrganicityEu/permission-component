@@ -5,27 +5,50 @@ package eu.organicity;
  * 
  * @author Dennis Boldt
  */
-public class AccessRoles {
+public enum AccessRoles {
 
 	/*
 	 * USERS
 	 */
-	public static String READ_GLOBAL_ROLES = "accounts-permissions:readGlobalRoles";
-	public static String READ_LOCAL_ROLES = "accounts-permissions:readLocalRoles";
-	public static String EDIT_GLOBAL_ROLES = "accounts-permissions:editGlobalRoles";
-	public static String EDIT_LOCAL_ROLES = "accounts-permissions:editLocalRoles";
+	READ_GLOBAL_ROLES("accounts-permissions:readGlobalRoles"),
+	READ_LOCAL_ROLES("accounts-permissions:readLocalRoles"),
+	EDIT_GLOBAL_ROLES("accounts-permissions:editGlobalRoles"),
+	EDIT_LOCAL_ROLES("accounts-permissions:editLocalRoles"),
 
-	public static String LIST_USERS = "accounts-permissions:listUsers";
-	public static String FIND_USER_BY_MAIL = "accounts-permissions:findUserByEmail";
+	LIST_USERS("accounts-permissions:listUsers"),
+	FIND_USER_BY_MAIL("accounts-permissions:findUserByEmail"),
 	
-	public static String GET_USER_DETAILS = "accounts-permissions:getUserDetails";
-	public static String EDIT_USER_DETAILS = "accounts-permissions:editUserDetails";
+	GET_USER_DETAILS("accounts-permissions:getUserDetails"),
+	EDIT_USER_DETAILS("accounts-permissions:editUserDetails"),
 
 	/*
 	 * CLIENTS
 	 */
-	public static String CREATE_CLIENT = "accounts-permissions:createClient";
-	public static String READ_CLIENT_REDIRECTURIS = "accounts-permissions:readClientRedirectUris";
-	public static String EDIT_CLIENT_REDIRECTURIS = "accounts-permissions:editClientRedirectUris";
+	CREATE_CLIENT("accounts-permissions:createClient"),
+	DELETE_CLIENT("accounts-permissions:deleteClient"),
+	READ_CLIENT("accounts-permissions:readClient"),
+	READ_CLIENT_SECRET("accounts-permissions:readClientSecret"),
+	READ_CLIENT_REDIRECTURIS("accounts-permissions:readClientRedirectUris"),
+	EDIT_CLIENT_REDIRECTURIS("accounts-permissions:editClientRedirectUris"),
+	
+	/*
+	 * ROLES
+	 */
+	
+	GET_SUBS_BY_ROLE("accounts-permissions:getSubsPerRole");
+	
+    private final String name;       
+
+    private AccessRoles(String s) {
+        this.name = s;
+    }
+
+    public boolean equalsName(String otherName) {
+        return this.name.equals(otherName);
+    }
+
+    public String toString() {
+       return this.name;
+    }
 
 }
