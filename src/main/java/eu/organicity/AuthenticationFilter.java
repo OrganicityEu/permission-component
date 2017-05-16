@@ -22,9 +22,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
-
 import io.jsonwebtoken.Claims;
 
 /*
@@ -63,14 +60,14 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         }
 
         // Validate the roles
-        List<String> rolesFound = validateRoles(claims);
+        List<AccessRoles> rolesFound = validateRoles(claims);
         
         requestContext.getHeaders().add("X-ClientID", (String) claims.get("clientId"));
-        requestContext.getHeaders().add("X-Client-Roles",  StringUtils.join(rolesFound, ",")); 
+        requestContext.getHeaders().add("X-Client-Roles", Utils.convertAccessRolesToRolesString(rolesFound)); 
         requestContext.getHeaders().add("X-Sub", (String) claims.get("sub"));
     }
     
-    private List<String> validateRoles(Claims claims) {
+    private List<AccessRoles> validateRoles(Claims claims) {
 
         // Get the resource method which matches with the requested URL
         // Extract the roles declared by it
@@ -99,21 +96,15 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         	throw new ForbiddenException("No authorzation to access this resource! (3)");
         }
 
-        // Workaround: Prefix all roles
-        // FIXME: Remove at the end!
-        for (int i = 0; i < tokenRoles.size(); i++) {
-			tokenRoles.set(i, "accounts-permissions:" + tokenRoles.get(i));
-		}
-
         //System.out.println("Annotated roles: " + methodRoles.toString());
         //System.out.println("User roles: " + tokenRoles.toString());
         
-        List<String> rolesFound = new LinkedList<>();
+        List<AccessRoles> rolesFound = new LinkedList<>();
         
         for (AccessRoles mr : methodRoles) {
 			for (String ar : tokenRoles) {
 				if(ar.equals(mr.toString())) {
-					rolesFound.add(ar);
+					rolesFound.add(mr);
 				}
 			}
 		}

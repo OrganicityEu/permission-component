@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import eu.organicity.AccessRoles;
 import eu.organicity.Config;
 import eu.organicity.Secured;
+import eu.organicity.Utils;
 import eu.organicity.accounts.permissions.Accounts;
 import eu.organicity.accounts.permissions.MySqlConfig;
 import eu.organicity.accounts.permissions.UserIdentifier;
@@ -59,7 +60,7 @@ public class Users extends Application {
 		//Users.log.info("####################################################################");
 		
 		MySqlConfig mysqlConfig = new MySqlConfig(Config.connectionUrl, Config.connectionUser, Config.connectionPassword);
-		accounts = Accounts.withBasicAuth(Config.basicAuth, mysqlConfig);
+		this.accounts = Accounts.withBasicAuth(Config.basicAuth, mysqlConfig);
 	}
 
 	/**
@@ -93,17 +94,18 @@ public class Users extends Application {
 	 * 		or if count was too large.
 	 */
 	@GET
-	@Secured
+	@Secured({AccessRoles.FIND_USER_BY_MAIL, AccessRoles.LIST_USERS})
 	@Produces({ MediaType.APPLICATION_JSON })
 	public Response getallUsers(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@DefaultValue("0") @QueryParam("offset") Integer offset,
 		@DefaultValue("50") @QueryParam("count") Integer count,
         @QueryParam("email") String email
 	) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
+		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);
 
 		log.info("#### Get all users ####");
 		log.info("Client ID: " + clientid);
@@ -116,7 +118,7 @@ public class Users extends Application {
 		List<User> users = new LinkedList<>();
 
 		if(email != null) {
-			if(hasRolefindUserByEmail(clientRoles)) {
+			if(clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL)) {
 				UserIdentifier userIdentifier = accounts.findUserByEmail(email);
 				if(userIdentifier != null) {
 					users.add(new UserImpl(userIdentifier));
@@ -125,7 +127,7 @@ public class Users extends Application {
 
 				return Response.status(Status.NOT_FOUND).build();
 			}
-		} else if(hasRoleListUsers(clientRoles)) {
+		} else if(clientRoles.contains(AccessRoles.LIST_USERS)) {
 		    if (offset < 0 || count <= 0 || count > 50) {
 		    	return Response.status(422).entity("Offset or count values not valid").build();
 		    }
@@ -146,7 +148,7 @@ public class Users extends Application {
 	}
 
 	@GET
-	@Secured
+	@Secured({AccessRoles.GET_USER_DETAILS})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}")
 	public Response getUserById(
@@ -155,17 +157,10 @@ public class Users extends Application {
 		@PathParam("userid") String userid
 	) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-
 		log.info("#### Get User by ID ####");
 		log.info("Client ID: " + clientid);
-		log.info("Client Roles: " + clientRoles.toString());
 		log.info("User ID: " + userid);
 		log.info("########################");
-
-		if(!hasRoleGetUserDetails(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
 
 		try {
 			UserIdentifier userIdentifier = accounts.getUserById(userid);
@@ -182,7 +177,7 @@ public class Users extends Application {
 	}
 
 	@PUT
-	@Secured
+	@Secured({AccessRoles.EDIT_USER_DETAILS})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}")
 	public Response updateUserById(
@@ -193,17 +188,10 @@ public class Users extends Application {
 		User user
 	) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-
 		log.info("#### Get User by ID ####");
 		log.info("Client ID: " + clientid);
-		log.info("Client Roles: " + clientRoles.toString());
 		log.info("User ID: " + userid);
 		log.info("########################");
-
-		if(!hasRoleEditUserDetails(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
 
 		try {
 			// Convert JAX-RS presentation to accounts-permissions presentation
@@ -244,36 +232,33 @@ public class Users extends Application {
 	 * 	404 Not Found - The supplied user ID does not denote an existing user.
 	 */
 	@GET
-	@Secured
+	@Secured({AccessRoles.READ_GLOBAL_ROLES, AccessRoles.READ_LOCAL_ROLES})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/permissions")
 	public Response getAllRoles(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid
 	) {
-
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
 		
+		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);
+
 		log.info("#### Get permissions of an user ####");
 		log.info("Client ID: " + clientid);
 		log.info("Client Roles: " + clientRoles.toString());
 		log.info("User ID: " + userid);
 		log.info("####################");		
 		
-		if(!hasRoleReadRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
-		
 		try {
 			// If this is reached, the client has one of the given roles.
-			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString());
-			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString()) ? clientid : null;
-			List<String> roles = accounts.getUserRoles(userid, clientid2, clientOnly);
-			if(roles == null) {
+			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES);
+			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES) ? clientid : null;
+			List<String> roles2 = accounts.getUserRoles(userid, clientid2, clientOnly);
+			if(roles2 == null) {
 				return Response.status(Status.NOT_FOUND).build();
 			} 
-			return Response.ok(roleConverter(roles)).build();
+			return Response.ok(roleConverter(roles2)).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
@@ -281,16 +266,17 @@ public class Users extends Application {
 	}
 
 	@GET
-	@Secured
+	@Secured({AccessRoles.READ_GLOBAL_ROLES, AccessRoles.READ_LOCAL_ROLES})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles")
 	@Deprecated
 	public Response getAllRolesDepricated(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid
 	) {
-		return getAllRoles(clientid, sub, userid);
+		return getAllRoles(clientid, roles, sub, userid);
 	}
 	
 	/**
@@ -315,12 +301,13 @@ public class Users extends Application {
 	 * 		but was not supplied.
 	 */
 	@POST
-	@Secured
+	@Secured({AccessRoles.EDIT_GLOBAL_ROLES, AccessRoles.EDIT_LOCAL_ROLES})
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/permissions")
 	public Response postRole(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,		
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
 		@Context UriInfo uriInfo,
@@ -328,11 +315,7 @@ public class Users extends Application {
 	) {
 
 		String rolename = role.getRole();
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-		
-		if(!hasRoleEditRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}		
+		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);
 		
 		try {
 			log.info("#### Post Roles ####");
@@ -346,7 +329,7 @@ public class Users extends Application {
 				? AccessRoles.EDIT_GLOBAL_ROLES 
 				: AccessRoles.EDIT_LOCAL_ROLES;
 			
-			if(clientRoles.contains(permission.toString())) {
+			if(clientRoles.contains(permission)) {
 				Boolean success = accounts.setUserRole(userid, rolename);
 				
 				if(success) {
@@ -366,19 +349,20 @@ public class Users extends Application {
 	}	
 
 	@POST
-	@Secured
+	@Secured({AccessRoles.EDIT_GLOBAL_ROLES, AccessRoles.EDIT_LOCAL_ROLES})
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles")
 	@Deprecated
 	public Response postRoleDepricated(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
 		@Context UriInfo uriInfo,
 		Role role
 	) {
-		return postRole(clientid, sub, userid, uriInfo, role);
+		return postRole(clientid, roles, sub, userid, uriInfo, role);
 	}
 
 	/**
@@ -404,16 +388,17 @@ public class Users extends Application {
 	 * 		that an experiment identifier was required as part of the role, but was not supplied.
 	 */
 	@DELETE
-	@Secured
+	@Secured({AccessRoles.EDIT_GLOBAL_ROLES, AccessRoles.EDIT_LOCAL_ROLES})
 	@Path("/{userid}/permissions/{rolename}")
 	public Response deleteRoleByName(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
 		@PathParam("rolename") String rolename) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");		
-		
+		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);
+
 		log.info("#### Delete Role ####");
 		log.info("Client ID: " + clientid);
 		log.info("Client Roles: " + clientRoles.toString());
@@ -421,19 +406,14 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("#####################");
 	
-		if(!hasRoleEditRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}		
-		
 		try {
 			
 			AccessRoles permission = accounts.isRealmRole(rolename) 
 					? AccessRoles.EDIT_GLOBAL_ROLES 
 					: AccessRoles.EDIT_LOCAL_ROLES;
 				
-			if(clientRoles.contains(permission.toString())) {
+			if(clientRoles.contains(permission)) {
 				Boolean success = accounts.removeUserRole(userid, rolename);
-				
 				if(success) {
 					return Response.ok().build();
 				}
@@ -449,15 +429,16 @@ public class Users extends Application {
 	}
 	
 	@DELETE
-	@Secured
+	@Secured({AccessRoles.EDIT_GLOBAL_ROLES, AccessRoles.EDIT_LOCAL_ROLES})
 	@Path("/{userid}/roles/{rolename}")
 	@Deprecated
 	public Response deleteRoleByNameDepricated(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,		
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
 		@PathParam("rolename") String rolename) {
-		return deleteRoleByName(clientid, sub, userid, rolename);
+		return deleteRoleByName(clientid, roles, sub, userid, rolename);
 	}
 
 	/**
@@ -482,17 +463,18 @@ public class Users extends Application {
 	 * 		not supplied.
 	 */
 	@GET
-	@Secured
+	@Secured({AccessRoles.READ_GLOBAL_ROLES, AccessRoles.READ_LOCAL_ROLES})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/permissions/{rolename}")
 	public Response getRoleByName(
-		@HeaderParam("X-ClientID") String clientid, 
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid, 
 		@PathParam("rolename") String rolename
 	) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");		
+		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);		
 		
 		log.info("#### Get Role ####");
 		log.info("Client ID: " + clientid);
@@ -501,16 +483,12 @@ public class Users extends Application {
 		log.info("Role:" + rolename);
 		log.info("##################");
 
-		if(!hasRoleReadRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}		
-
 		try {
-			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString());
-			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString()) ? clientid : null;
-			List<String> roles = accounts.getUserRoles(userid, clientid2, clientOnly);
+			boolean clientOnly = !clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES);
+			String clientid2 = clientRoles.contains(AccessRoles.READ_LOCAL_ROLES) ? clientid : null;
+			List<String> roles2 = accounts.getUserRoles(userid, clientid2, clientOnly);
 			
-			if(roles != null && roles.contains(rolename)) {
+			if(roles2 != null && roles2.contains(rolename)) {
 				return Response.ok().build();
 			}
 			
@@ -522,17 +500,18 @@ public class Users extends Application {
 	}
 
 	@GET
-	@Secured
+	@Secured({AccessRoles.READ_GLOBAL_ROLES, AccessRoles.READ_LOCAL_ROLES})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{userid}/roles/{rolename}")
 	@Deprecated
 	public Response getRoleByNameDepriocated(
 		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Client-Roles") String roles,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
 		@PathParam("rolename") String rolename
 	) {
-		return getRoleByName(clientid, sub, userid, rolename);
+		return getRoleByName(clientid, roles, sub, userid, rolename);
 	}
 
 	//#########################################################################
@@ -551,48 +530,6 @@ public class Users extends Application {
 			newRoles.add(new RoleImpl(role));
 		}
 		return newRoles;
-	}
-
-	/**
-	 * Checks, if the user has the role `accounts-permissions:readGlobalRoles` or `accounts-permissions:readLocalRoles` 
-	 * 
-	 * @param clientRoles A list of roles which the user has
-	 * @return true, if the user has the role, otherwise false
-	 */
-	private boolean hasRoleReadRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.READ_GLOBAL_ROLES.toString()) || clientRoles.contains(AccessRoles.READ_LOCAL_ROLES.toString());
-	}
-	
-	/**
-	 * Checks, if the user has the role `accounts-permissions:editGlobalRoles` or `accounts-permissions:editLocalRoles`
-	 * 
-	 * @param clientRoles A list of roles which the user has
-	 * @return true, if the user has the role, otherwise false
-	 */
-	private boolean hasRoleEditRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_GLOBAL_ROLES.toString()) || clientRoles.contains(AccessRoles.EDIT_LOCAL_ROLES.toString());
-	}
-	
-	/**
-	 * Checks, if the user has the role `accounts-permissions:listUsers`
-	 *
-	 * @param clientRoles A list of roles which the user has
-	 * @return true, if the user has the role, otherwise false
-	 */
-	private boolean hasRoleListUsers(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.LIST_USERS.toString());
-	}
-	
-	private boolean hasRolefindUserByEmail(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.FIND_USER_BY_MAIL.toString());
-	}
-
-	private boolean hasRoleGetUserDetails(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.GET_USER_DETAILS.toString());
-	}
-
-	private boolean hasRoleEditUserDetails(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_USER_DETAILS.toString());
 	}
 
 }

@@ -50,7 +50,7 @@ public class Clients extends Application{
 	}
 	
 	@POST
-	@Secured
+	@Secured({AccessRoles.CREATE_CLIENT})
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public Response postRole(
@@ -60,15 +60,9 @@ public class Clients extends Application{
 		Client client
 	) {
 
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-		if(!hasCreateClientRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}		
-		
 		try {
 			log.info("#### Create new Client ####");
 			log.info("Client ID: " + clientid);
-			log.info("Client Roles: " + clientRoles.toString());
 			log.info("New Client Name:" + client.getClientName());
 			log.info("New Client URI:" + client.getClientUri());
 			log.info("New Redirect URI:" + client.getRedirectUri());
@@ -97,7 +91,7 @@ public class Clients extends Application{
 	 * Thus, it is DEPRICATED
 	 */
 	@POST
-	@Secured
+	@Secured({AccessRoles.CREATE_CLIENT})
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/create")
@@ -121,7 +115,7 @@ public class Clients extends Application{
 	 * @return
 	 */
 	@GET
-	@Secured
+	@Secured({AccessRoles.READ_CLIENT_REDIRECTURIS})
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/{clientName}/redirecturis")
 	public Response getRedirectUris(
@@ -130,15 +124,9 @@ public class Clients extends Application{
 		@Context UriInfo uriInfo,
 		@PathParam("clientName") String clientName
 	) {
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-		if(!hasReadClientRedirectUriRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
-
 		try {
 			log.info("#### Get redirect URIs for a given client ####");
 			log.info("Client ID: " +clientid);
-			log.info("Client Roles: " + clientRoles.toString());
 			log.info("Client Name: " + clientName);
 			log.info("##############################################");
 
@@ -160,7 +148,7 @@ public class Clients extends Application{
 	}
 
 	@PUT
-	@Secured
+	@Secured({AccessRoles.EDIT_CLIENT_REDIRECTURIS})
 	@Path("/{clientName}/redirecturis")
 	public Response putRedirectUris(
 		@HeaderParam("X-ClientID") String clientid,
@@ -169,15 +157,9 @@ public class Clients extends Application{
 		@PathParam("clientName") String clientName,
 		RedirectUri redireturis
 	) {
-		List<String> clientRoles = accounts.getUserRoles(sub, "accounts-permissions");
-		if(!hasUpdateClientRedirectUriRole(clientRoles)) {
-			return Response.status(Status.FORBIDDEN).build();
-		}
-
 		try {
 			log.info("#### Update redirect URIs for a given client ####");
 			log.info("Client ID: " + clientid);
-			log.info("Client Roles: " + clientRoles.toString());
 			log.info("Client Name: " + clientName);
 			log.info("##############################################");
 
@@ -240,20 +222,6 @@ public class Clients extends Application{
 		}
 
 		return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-	}	
-
-	private boolean hasCreateClientRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.CREATE_CLIENT.toString());
 	}
 
-	private boolean hasReadClientRedirectUriRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.READ_CLIENT_REDIRECTURIS.toString());
-	}
-
-	private boolean hasUpdateClientRedirectUriRole(List<String> clientRoles) {
-		return clientRoles.contains(AccessRoles.EDIT_CLIENT_REDIRECTURIS.toString());
-	}
-
-	
-	
 }

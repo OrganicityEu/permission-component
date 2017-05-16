@@ -10,32 +10,36 @@ public enum AccessRoles {
 	/*
 	 * USERS
 	 */
-	READ_GLOBAL_ROLES("accounts-permissions:readGlobalRoles"),
-	READ_LOCAL_ROLES("accounts-permissions:readLocalRoles"),
-	EDIT_GLOBAL_ROLES("accounts-permissions:editGlobalRoles"),
-	EDIT_LOCAL_ROLES("accounts-permissions:editLocalRoles"),
+	READ_GLOBAL_ROLES("readGlobalRoles"),
+	READ_LOCAL_ROLES("readLocalRoles"),
+	EDIT_GLOBAL_ROLES("editGlobalRoles"),
+	EDIT_LOCAL_ROLES("editLocalRoles"),
 
-	LIST_USERS("accounts-permissions:listUsers"),
-	FIND_USER_BY_MAIL("accounts-permissions:findUserByEmail"),
+	LIST_USERS("listUsers"),
+	FIND_USER_BY_MAIL("findUserByEmail"),
 	
-	GET_USER_DETAILS("accounts-permissions:getUserDetails"),
-	EDIT_USER_DETAILS("accounts-permissions:editUserDetails"),
+	GET_USER_DETAILS("getUserDetails"),
+	EDIT_USER_DETAILS("editUserDetails"),
 
 	/*
 	 * CLIENTS
 	 */
-	CREATE_CLIENT("accounts-permissions:createClient"),
-	DELETE_CLIENT("accounts-permissions:deleteClient"),
-	READ_CLIENT("accounts-permissions:readClient"),
-	READ_CLIENT_SECRET("accounts-permissions:readClientSecret"),
-	READ_CLIENT_REDIRECTURIS("accounts-permissions:readClientRedirectUris"),
-	EDIT_CLIENT_REDIRECTURIS("accounts-permissions:editClientRedirectUris"),
+	CREATE_CLIENT("createClient"),
+	DELETE_CLIENT("deleteClient"),
+	READ_CLIENT("readClient"),
+	READ_CLIENT_SECRET("readClientSecret"),
+	READ_CLIENT_REDIRECTURIS("readClientRedirectUris"),
+	EDIT_CLIENT_REDIRECTURIS("editClientRedirectUris"),
 	
 	/*
 	 * ROLES
 	 */
 	
-	GET_SUBS_BY_ROLE("accounts-permissions:getSubsPerRole");
+	GET_SUBS_BY_ROLE("getSubsPerRole");
+	
+	/*
+	 * HELPER
+	 */
 	
     private final String name;       
 
