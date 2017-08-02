@@ -71,7 +71,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
     
     private List<AccessRoles> validateRoles(Claims claims) {
-    	
+
         // Get the resource method which matches with the requested URL
         // Extract the roles declared by it
         Method resourceMethod = resourceInfo.getResourceMethod();

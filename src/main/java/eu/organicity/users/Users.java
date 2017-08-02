@@ -514,6 +514,37 @@ public class Users extends Application {
 		return getRoleByName(clientid, roles, sub, userid, rolename);
 	}
 
+	@PUT
+	@Secured({AccessRoles.RESET_PASSWORD})
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/{userid}/change_password")
+	public Response changePassword(
+		@HeaderParam("X-ClientID") String clientid,
+		@HeaderParam("X-Sub") String sub,
+		@PathParam("userid") String userid,
+		@Context UriInfo uriInfo,
+		Password password
+	) {
+
+		log.info("#### Get User by ID ####");
+		log.info("Client ID: " + clientid);
+		log.info("User ID: " + userid);
+		log.info("########################");
+
+		try {
+			try {
+				accounts.resetPassword(userid, password.getPassword());
+				return Response.status(Status.NO_CONTENT).build();
+			} catch (Exception e) {
+	    		JSONObject error = new JSONObject().put("error", e.getMessage());
+				return Response.status(Status.BAD_REQUEST).entity(error.toString()).build();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+	}
+
 	//#########################################################################
 	// Local helper
 	//#########################################################################

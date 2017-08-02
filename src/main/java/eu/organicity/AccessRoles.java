@@ -20,6 +20,7 @@ public enum AccessRoles {
 	
 	GET_USER_DETAILS("getUserDetails"),
 	EDIT_USER_DETAILS("editUserDetails"),
+	RESET_PASSWORD("resetUserPassword"),
 
 	/*
 	 * CLIENTS
