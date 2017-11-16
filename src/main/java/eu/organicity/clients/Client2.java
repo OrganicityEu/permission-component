@@ -7,7 +7,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
  * 
  * @author Dennis Boldt
  */
-@JsonDeserialize(as=ClientImpl2.class)
+@JsonDeserialize(as=Client2Impl.class)
 public interface Client2 {
 
 	public void setClientId(String clientId);

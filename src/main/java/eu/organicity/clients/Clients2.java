@@ -67,19 +67,16 @@ public class Clients2 extends Application{
 		log.info("###########################");
 		
 		List<AccessRoles> clientRoles = Utils.convertRolesStringToAccessRoles(roles);
-		
+
+		// This ensures as well, that the same roles under "scope" and "service account" are used within keyCloak
 		JSONObject jsonObject = accounts.registerClient(client.getClientId(), client.getRoles(), clientRoles.contains(AccessRoles.READ_CLIENT_SECRET));
 
 		// this will be a JSON object, or an exception is thrown internally and already handled by JAX-RS!
 		String clientName = jsonObject.get("client_id").toString();
+
 		// Remove the global scope
 		accounts.setFullScope(clientName, false);
 		
-		// Set experimenter and participant scope
-		// This is neede, if the experimenters create applications to authenticate experimenters or participants
-		// Thus, they can see this assigned roles
-		accounts.setClientScopeRole(clientName, "experimenter");
-		accounts.setClientScopeRole(clientName, "participant");
 		return Response.status(201).entity(jsonObject.toString()).build();
 	}
 

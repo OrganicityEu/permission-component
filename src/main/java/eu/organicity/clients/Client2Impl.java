@@ -5,13 +5,13 @@ package eu.organicity.clients;
  * 
  * @author boldt
  */
-public class ClientImpl2 implements Client2 {
+public class Client2Impl implements Client2 {
 
 	private String clientId;
 	private String[] roles;
 
 	// Needed by Jackson
-	public ClientImpl2() {}
+	public Client2Impl() {}
 
 	@Override
 	public void setClientId(String clientId) {
