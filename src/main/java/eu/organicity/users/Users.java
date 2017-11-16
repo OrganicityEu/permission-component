@@ -200,7 +200,7 @@ public class Users extends Application {
 			u.setEmail(user.getEmail());
 			u.setFirstName(user.getFirstName());
 			u.setLastName(user.getLastName());
-			u.setName(user.getName());
+			u.setName(user.getName()); // username!
 
 			try {
 				accounts.updateUserById(userid, u);
@@ -517,8 +517,8 @@ public class Users extends Application {
 	@PUT
 	@Secured({AccessRoles.RESET_PASSWORD})
 	@Produces({ MediaType.APPLICATION_JSON })
-	@Path("/{userid}/change_password")
-	public Response changePassword(
+	@Path("/{userid}/reset_password")
+	public Response resetPassword(
 		@HeaderParam("X-ClientID") String clientid,
 		@HeaderParam("X-Sub") String sub,
 		@PathParam("userid") String userid,
@@ -536,8 +536,18 @@ public class Users extends Application {
 				accounts.resetPassword(userid, password.getPassword());
 				return Response.status(Status.NO_CONTENT).build();
 			} catch (Exception e) {
-	    		JSONObject error = new JSONObject().put("error", e.getMessage());
-				return Response.status(Status.BAD_REQUEST).entity(error.toString()).build();
+				// Converts 
+				// {"errorMessage" : "Invalid password: minimum length 6."}
+				// to
+				// {"error" : "Invalid password: minimum length 6."}
+				try {
+					JSONObject json = new JSONObject(e.getMessage());
+					json.put("error", json.getString("errorMessage"));
+					json.remove("errorMessage");
+					return Response.status(Status.BAD_REQUEST).entity(json.toString()).build();
+				} catch (Exception e2) {
+					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
